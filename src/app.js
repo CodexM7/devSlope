@@ -47,7 +47,11 @@ app.patch("/user", async (req,res) => {
     try {
         if(!req.body)
             return res.status(400).json({message:'Details required'});
-        const updatedData = await User.findOneAndUpdate({emailId:req.body.emailId},req.body);
+        const updatedData = await User.findOneAndUpdate(
+            {emailId:req.body.emailId},
+            req.body,
+            { new: false, runValidators: true }
+        );
         if(!updatedData)
             return res.status(200).send(updatedData);
         return res.status(200).send(updatedData);
