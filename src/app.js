@@ -7,6 +7,7 @@ app.use(express.json());
 
 app.post("/signup", async (req,res) => {
     try {
+        console.log('/signup'); 
         const user = User(req.body);
         await user.save();
         res.send("User added successfully");
@@ -14,7 +15,56 @@ app.post("/signup", async (req,res) => {
         res.status(400);
         res.send(err);
     }
-})
+});
+
+app.get("/user",async (req,res)=>{
+    try{
+        if(!req.body.emailId)
+            return res.status(400).json({error:"emailId is required"});
+        userData = await User.find({emailId:req.body.emailId})
+        if(!userData.length)
+            return res.status(404).json(userData);
+        return res.status(200).json(userData);
+    } catch (err) {
+        return res.status(400).send("Something Went Wrong: ",err);
+    }
+});
+
+app.delete("/user", async (req,res)=>{
+    try{
+        if(!req.body.emailId)
+            return res.status(400).send("emailId is required.");
+        const deleteUser = await User.deleteOne({emailId:req.body.emailId});
+        if(!deleteUser)
+            return res.status(200).send(deleteUser);
+        return res.status(200).send(deleteUser);
+    } catch(err) {
+        return res.status(400).send("Something went wrong");
+    }
+});
+
+app.patch("/user", async (req,res) => {
+    try {
+        if(!req.body)
+            return res.status(400).json({message:'Details required'});
+        const updatedData = await User.findOneAndUpdate({emailId:req.body.emailId},req.body);
+        if(!updatedData)
+            return res.status(200).send(updatedData);
+        return res.status(200).send(updatedData);
+    } catch (err) {
+        return res.status(400).send("Something went wrong!");
+    }
+});
+
+app.get("/feed", async (req,res)=>{
+    try{
+        const users = await User.find({});
+        return res.status(200).send(users);
+    } catch(err) {
+        return res.status(400).send("Something went wrong");
+    }
+});
+
 
 connectDB().then(()=>{
     console.log("Database Connection Establish");
