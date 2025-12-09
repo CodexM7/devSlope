@@ -22,26 +22,21 @@ app.post("/signup", async (req,res) => {
         await user.save();
         res.send("User added successfully");
     } catch(err) {
-        res.status(400);
-        res.send(err);
+        res.status(400).send(err);
     }
 });
 
 app.post("/login", async (req,res) => {
     try {
         const userData = await user.findOne({emailId:req.body.emailId});
-        const isPasswdValid = await bcrypt.compare(req.body.password,userData.password);
-        if(!isPasswdValid) {
-            return res.status(404).send("Invalid Credentials");
-        }
-        const token = await jwt.sign({_id:userData._id}, "J)w8h$AG",
-            {expiresIn:"1d"}
-        );
-        // console.log(token);
-        res.cookie("token",token);
+        if(!userData) throw new Error("User Not Found");
+        const isPasswdValid = await userData.validatePassword(req.body.password);
+        if(!isPasswdValid) return res.status(404).send("Invalid Credentials");
+        const token = await userData.getJWT();
+        res.cookie("token",token, {expires: new Date(Date.now() + 8 * 3600000)});
         return res.status(200).send("Login Successful");
     } catch (err) {
-        return res.status(400).send(err);
+        return res.status(400).send(err.message);
     }
 });
 
