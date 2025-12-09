@@ -5,12 +5,15 @@ const app = express();
 const { validateSignUpData } = require('./utils/validation');
 const bcrypt = require('bcrypt');
 const user = require('./models/user');
+const cookieParser = require('cookie-parser');
+const jwt = require('jsonwebtoken');
+const {userAuth} = require('./middlewares/auth');
 
 app.use(express.json());
+app.use(cookieParser());
 
 app.post("/signup", async (req,res) => {
     try {
-        // console.log('/signup'); 
         // validateSignUpData(req);
         const passwdHash = await bcrypt.hash(req.body.password,10);
         req.body.password = passwdHash;
@@ -31,63 +34,30 @@ app.post("/login", async (req,res) => {
         if(!isPasswdValid) {
             return res.status(404).send("Invalid Credentials");
         }
+        const token = await jwt.sign({_id:userData._id}, "J)w8h$AG",
+            {expiresIn:"1d"}
+        );
+        // console.log(token);
+        res.cookie("token",token);
         return res.status(200).send("Login Successful");
     } catch (err) {
         return res.status(400).send(err);
     }
 });
 
-app.get("/user",async (req,res)=>{
-    try{
-        if(!req.body.emailId)
-            return res.status(400).json({error:"emailId is required"});
-        userData = await User.find({emailId:req.body.emailId})
-        if(!userData.length)
-            return res.status(404).json(userData);
-        return res.status(200).json(userData);
-    } catch (err) {
-        return res.status(400).send("Something Went Wrong: ",err);
-    }
-});
-
-app.delete("/user", async (req,res)=>{
-    try{
-        if(!req.body.emailId)
-            return res.status(400).send("emailId is required.");
-        const deleteUser = await User.deleteOne({emailId:req.body.emailId});
-        if(!deleteUser)
-            return res.status(200).send(deleteUser);
-        return res.status(200).send(deleteUser);
-    } catch(err) {
-        return res.status(400).send("Something went wrong");
-    }
-});
-
-app.patch("/user", async (req,res) => {
+app.get("/profile", userAuth, async (req,res)=>{
     try {
-        if(!req.body)
-            return res.status(400).json({message:'Details required'});
-        const updatedData = await User.findOneAndUpdate(
-            {emailId:req.body.emailId},
-            req.body,
-            { new: false, runValidators: true }
-        );
-        if(!updatedData)
-            return res.status(200).send(updatedData);
-        return res.status(200).send(updatedData);
-    } catch (err) {
-        return res.status(400).send("Something went wrong!");
+        const user = req.user;
+        return res.status(200).send(user);
+    } catch(err) {
+        return res.status(400).send("Something Went Wrong!");
     }
 });
 
-app.get("/feed", async (req,res)=>{
-    try{
-        const users = await User.find({});
-        return res.status(200).send(users);
-    } catch(err) {
-        return res.status(400).send("Something went wrong");
-    }
-});
+app.post("/sendConnectionRequest", userAuth, async (req,res) => {
+    console.log("Sending a connection request!");
+    res.send("Connection request Sent!");
+})
 
 
 connectDB().then(()=>{
