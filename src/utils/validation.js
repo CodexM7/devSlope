@@ -1,4 +1,5 @@
 // Validation
+const { allowedEditFields } = require("../config/editableFields");
 
 const validateSignUpData = (req) => {
 
@@ -12,6 +13,16 @@ const validateSignUpData = (req) => {
     // }
 }
 
+const validateEditProfileData = (req) => {
+    
+    const isEditAllowed = Object.keys(req.body).every(
+        field => allowedEditFields.includes(field)
+    );
+
+    return isEditAllowed;
+}
+
 module.exports = {
-    validateSignUpData
+    validateSignUpData,
+    validateEditProfileData
 }
