@@ -3,10 +3,12 @@ const mongoose = require('mongoose');
 const connectionRequestSchema = new mongoose.Schema({
     fromUserId: {
         type: mongoose.Schema.Types.ObjectId,
+        ref: "User", // reference to the user collection
         required: true
     },
     toUserId: {
         type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
         required: true
     },
     status: {
@@ -24,12 +26,11 @@ const connectionRequestSchema = new mongoose.Schema({
 // Compound indexing
 connectionRequestSchema.index({ fromUserId: 1, toUserId: 1});
 
-connectionRequestSchema.pre('save', function (next) {
-    const connectionRequest = this;
-    // Check fromUserId == toUserId
-    if(connectionRequest.fromUserId.equals(connectionRequest.toUserId))
-        throw new Error("Cannot send connection request to yourself!");
-    next();
-})
+connectionRequestSchema.pre('save', function () {
+    if (this.fromUserId.equals(this.toUserId)) {
+        throw new Error('Cannot send connection request to yourself!');
+    }
+});
+
 
 module.exports = mongoose.model("ConnectionRequest",connectionRequestSchema);

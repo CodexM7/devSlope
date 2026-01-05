@@ -3,6 +3,7 @@ const requestRouter = express.Router();
 const {userAuth} = require('../middlewares/auth');
 const ConnectionRequest = require('../models/connectionRequest');
 const User = require('../models/user');
+const connectionRequest = require('../models/connectionRequest');
 
 requestRouter.post("/sendConnectionRequest", userAuth, async (req,res) => {
     console.log("Sending a connection request!");
@@ -54,4 +55,36 @@ requestRouter.post(
     }
 )
 
+requestRouter.post(
+    "/request/review/:status/:requestId",
+    userAuth,
+    async (req,res) => {
+        try {
+            const loggedInUser = req.user;
+            const status = req.params.status;
+            const requestId = req.params.requestId;
+
+            const allowedStatus = ["accepted","rejected"];
+            if(!allowedStatus.includes(status))
+                return res.status(400).json({message: "Invalid Status Type: "+ status});
+
+            const connectionRequestData = await connectionRequest.findOne({
+                _id: requestId,
+                toUserId: loggedInUser._id,
+                status: "interested",
+            });
+            if(!connectionRequestData)
+                return res.status(400).json({message: "Request not found!"});
+
+            connectionRequestData.status = status;
+            const data = await connectionRequestData.save();
+            res.status(200).json({
+                message: "connection request proceed",
+                data: data
+            });
+        } catch (err) {
+            res.status(400).send("Error: "+ err.message);
+        }
+    }
+)
 module.exports = requestRouter;
