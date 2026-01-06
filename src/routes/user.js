@@ -60,4 +60,24 @@ userRouter.get("/user/connections", userAuth, async (req,res) => {
     }
 });
 
+userRouter.get("/feed", userAuth, async (req,res) => {
+    try {
+        const loggedInUser = req.user;
+        const connectionRequests = await connectionRequest.find({
+            $or: [{ fromUserId: loggedInUser._id}, {toUserId: loggedInUser._id}]
+        }).select("fromUserId toUserId");
+        const hideUsersFromFeed = new Set();
+        connectionRequests.forEach(req => {
+            hideUsersFromFeed.add(req.fromUserId.toString());
+            hideUsersFromFeed.add(req.toUserId.toString());
+        })
+        const users = await user.find({
+            _id: {$nin: Array.from(hideUsersFromFeed)}
+        }).select(["firstName", "lastName", "photoUrl", "gender", "age", "about", "skills"]);
+        res.status(200).json(users);
+    } catch (err) {
+        res.status(400).send("Error: "+err.message);
+    }
+});
+
 module.exports = userRouter;
