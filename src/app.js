@@ -2,8 +2,15 @@ const express = require('express');
 const connectDB = require('./config/database')
 const app = express();
 const cookieParser = require('cookie-parser');
+const cors = require('cors');
 
 app.use(express.json());
+app.use(cors({
+  origin: "http://localhost:5173", // frontend URL
+  credentials: true,              // allow cookies
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
 app.use(cookieParser());
 
 const authRouter = require('./routes/auth');

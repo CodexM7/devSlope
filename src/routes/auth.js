@@ -19,14 +19,23 @@ authRouter.post("/signup", async (req,res) => {
 });
 
 authRouter.post("/login", async (req,res) => {
-    try {
+    try { 
         const userData = await User.findOne({emailId:req.body.emailId});
+        
         if(!userData) throw new Error("User Not Found");
+        
         const isPasswdValid = await userData.validatePassword(req.body.password);
         if(!isPasswdValid) return res.status(404).send("Invalid Credentials");
+        
         const token = await userData.getJWT();
-        res.cookie("token",token, {expires: new Date(Date.now() + 8 * 3600000)});
-        return res.status(200).send("Login Successful");
+        res.cookie("token",token, {expires: new Date(Date.now() + 8 * 3600000)},
+        {
+            httpOnly: true,
+            secure: false,   // true in production (https)
+            sameSite: "lax"
+        });
+        
+        return res.status(200).send(userData);
     } catch (err) {
         return res.status(400).send(err.message);
     }
