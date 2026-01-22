@@ -82,7 +82,12 @@ userRouter.get("/feed", userAuth, async (req,res) => {
             _id: {$nin: Array.from(hideUsersFromFeed)}
         }).select(["firstName", "lastName", "photoUrl", "gender", "age", "about", "skills"])
         .skip(skip).limit(limit);
-
+        res.set({
+      "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+      "Pragma": "no-cache",
+      "Expires": "0",
+      "Surrogate-Control": "no-store",
+    });
         res.status(200).json(users);
     } catch (err) {
         res.status(400).send("Error: "+err.message);
